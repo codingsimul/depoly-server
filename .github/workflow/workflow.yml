@@ -1,0 +1,57 @@
+# main push 되면 cicd 자동실행
+# 컨테이너 기반 배포
+# 1 배포 및 빌드: 코드checkout - java17설치 - application.yml 생성 - 빌드 - 테스트 - 도커빌드
+# 2 배포: 이미지 이름 변경 - aws로그인자동화(aws-credentials) - 이미지ecr전송 - ec2ssh접속
+
+name: depoly
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  first-job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드checkout
+        uses: actions/checkout@v4
+      - name: java17설치
+        uses: actions/setup-java@v4
+
+      - name: application.yml 생성
+        run: echo "${{secrets.APPLICATION_PROPERTIES}}" > ./src/main/resources/application.yml
+
+      - name: 빌드 테스트
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean build
+
+      - name: 빌드 파일 이름 변경
+        run: mv ./build/libs/*.SNAPSHOT.jar ./project.jar
+
+      - name: scp로 파일 전송
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          username: ${{secrets.EC2_USERNAME}}
+          host: ${{secrets.EC2_HOST}}
+          key: ${{secrets.EC2_PRIVATE_KEY}}
+          source: project.jar
+          target: /home/ubuntu
+
+      - name: ssh ec2 접속
+        uses: appleboy@ssh-action@v1.0.3
+        with:
+          username: ${{secrets.EC2_USERNAME}}
+          host: ${{secrets.EC2_HOST}}
+          key: ${{secrets.EC2_PRIVATE_KEY}}
+          script_stop: true
+          script:
+#            mkdir /home/ubuntu/depolyDocker/current
+            rm -rf /home/ubuntu/current
+            mkdir /home/ubuntu/current
+            mv /home/ubuntu/project.jar /home/ubuntu/current/project.jar
+            cd /home/ubuntu/current/project.jar
+            sudo fuser -k -n tcp 8080 || true
+            nohup java -jar project.jar > ./output.log 2>&1 &
