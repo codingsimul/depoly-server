@@ -41,7 +41,7 @@ jobs:
           target: /home/ubuntu
 
       - name: ssh ec2 접속
-        uses: appleboy@ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.0.3
         with:
           username: ${{secrets.EC2_USERNAME}}
           host: ${{secrets.EC2_HOST}}
@@ -52,6 +52,6 @@ jobs:
             rm -rf /home/ubuntu/current
             mkdir /home/ubuntu/current
             mv /home/ubuntu/project.jar /home/ubuntu/current/project.jar
-            cd /home/ubuntu/current/project.jar
+            cd /home/ubuntu/current
             sudo fuser -k -n tcp 8080 || true
             nohup java -jar project.jar > ./output.log 2>&1 &
