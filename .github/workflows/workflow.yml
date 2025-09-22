@@ -34,7 +34,7 @@ jobs:
           ./gradlew clean build
 
       - name: 빌드 파일 이름 변경
-        run: mv ./build/libs/*.SNAPSHOT.jar ./project.jar
+        run: mv ./build/libs/*SNAPSHOT.jar ./project.jar
 
       - name: scp로 파일 전송
         uses: appleboy/scp-action@v0.1.7
