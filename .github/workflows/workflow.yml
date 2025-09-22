@@ -24,7 +24,9 @@ jobs:
           java-version: 17
 
       - name: application.yml 생성
-        run: echo "${{secrets.APPLICATION_PROPERTIES}}" > ./src/main/resources/application.yml
+        run: |
+          mkdir -p ./src/main/resources
+          echo "${{secrets.APPLICATION_PROPERTIES}}" > ./src/main/resources/application.yml
 
       - name: 빌드 테스트
         run: |
