@@ -52,7 +52,7 @@ jobs:
           host: ${{secrets.EC2_HOST}}
           key: ${{secrets.EC2_PRIVATE_KEY}}
           script_stop: true
-          script:
+          script: |
 #            mkdir /home/ubuntu/depolyDocker/current
             rm -rf /home/ubuntu/current
             mkdir /home/ubuntu/current
