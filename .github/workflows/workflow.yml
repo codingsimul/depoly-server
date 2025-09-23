@@ -35,27 +35,23 @@ jobs:
 
       - name: 빌드 파일 이름 변경
         run: mv ./build/libs/*SNAPSHOT.jar ./project.jar
+        
+      - name: 빌드 파일 압축하기 s3 전송 준비
+        run: tar -czvf $GITHUB_SHA.tar.gz project.jar appspec.yml scripts
 
-      - name: scp로 파일 전송
-        uses: appleboy/scp-action@v0.1.7
+      - name: aws 로그인
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          username: ${{secrets.EC2_USERNAME}}
-          host: ${{secrets.EC2_HOST}}
-          key: ${{secrets.EC2_PRIVATE_KEY}}
-          source: project.jar
-          target: /home/ubuntu
+          aws-region: ap-northeast-2
+          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
+          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
 
-      - name: ssh ec2 접속
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          username: ${{secrets.EC2_USERNAME}}
-          host: ${{secrets.EC2_HOST}}
-          key: ${{secrets.EC2_PRIVATE_KEY}}
-          script_stop: true
-          script: |
-            rm -rf /home/ubuntu/current
-            mkdir /home/ubuntu/current
-            mv /home/ubuntu/project.jar /home/ubuntu/current/project.jar
-            cd /home/ubuntu/current
-            sudo fuser -k -n tcp 8080 || true
-            nohup java -jar project.jar > ./output.log 2>&1 &
+      - name: s3 프로젝트 폴더 업로드하기
+        run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.tar.gz s3://junig-bucket/$GITHUB_SHA.tar.gz
+
+      - name: code deploy로 ec2에 배포하라고 명령
+        run: aws deploy create-deployment
+            --application-name depoly-server-codedepoly
+            --deployment-config-name CodeDeployDefault.AllAtOnce
+            --deployment-group-name depoly-server-prod
+            --s3-location bucket=junig-bucket,bundleType=tgz,key=$GITHUB_SHA.tar.gz
