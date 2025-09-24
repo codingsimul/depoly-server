@@ -3,7 +3,7 @@
 # 1 배포 및 빌드: 코드checkout - java17설치 - application.yml 생성 - 빌드 - 테스트 - 도커빌드
 # 2 배포: 이미지 이름 변경 - aws로그인자동화(aws-credentials) - 이미지ecr전송 - ec2ssh접속
 
-name: depoly
+name: CodeDeploy
 
 on:
   push:
@@ -11,47 +11,99 @@ on:
       - main
 
 jobs:
-  first-job:
-    runs-on: ubuntu-latest
+  CodeDeploy_CI/CD:
+    run-on: ubuntu-latest
 
-    steps:
-      - name: 코드checkout
+    step:
+      - name: checkout
         uses: actions/checkout@v4
-      - name: java17설치
-        uses: actions/setup-java@v4
+      - name: java 17
+        uses: actions/setup-java
         with:
           distribution: temurin
           java-version: 17
 
-      - name: application.yml 생성
+      - name: application.yml 추가
         run: |
           mkdir -p ./src/main/resources
           echo "${{secrets.APPLICATION_PROPERTIES}}" > ./src/main/resources/application.yml
-
-      - name: 빌드 테스트
+      - name: 빌드와테스트
         run: |
           chmod +x ./gradlew
           ./gradlew clean build
 
-      - name: 빌드 파일 이름 변경
+      - name: 파일 이름 변경
         run: mv ./build/libs/*SNAPSHOT.jar ./project.jar
-        
-      - name: 빌드 파일 압축하기 s3 전송 준비
-        run: tar -czvf $GITHUB_SHA.tar.gz project.jar appspec.yml scripts
+
+      - name: 압축파일 생성
+        run: tar -czvf $GITHUB_SHA.tar.gz project.jar scripts appspec.yml
 
       - name: aws 로그인
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ap-northeast-2
+          aws-region: aws-northeast-2
           aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
           aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
 
-      - name: s3 프로젝트 폴더 업로드하기
-        run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.tar.gz s3://junig-bucket/$GITHUB_SHA.tar.gz
-
-      - name: code deploy로 ec2에 배포하라고 명령
+      - name: s3 압축파일 전달
+        run: aws s3 cp --region aws-northeast-2 ./$GITHUB_SHA.tar.gz s3://junig-code-deploy-s3/$GITHUB_SHA.tar.gz
+        
+      - name: CodeDeploy로 ec2 agent에게 배포 명령
         run: aws deploy create-deployment
             --application-name depoly-server-codedepoly
             --deployment-config-name CodeDeployDefault.AllAtOnce
             --deployment-group-name depoly-server-prod
             --s3-location bucket=junig-bucket,bundleType=tgz,key=$GITHUB_SHA.tar.gz
+
+
+
+#on:
+#  push:
+#    branches:
+#      - main
+#
+#jobs:
+#  first-job:
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - name: 코드checkout
+#        uses: actions/checkout@v4
+#      - name: java17설치
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: temurin
+#          java-version: 17
+#
+#      - name: application.yml 생성
+#        run: |
+#          mkdir -p ./src/main/resources
+#          echo "${{secrets.APPLICATION_PROPERTIES}}" > ./src/main/resources/application.yml
+#
+#      - name: 빌드 테스트
+#        run: |
+#          chmod +x ./gradlew
+#          ./gradlew clean build
+#
+#      - name: 빌드 파일 이름 변경
+#        run: mv ./build/libs/*SNAPSHOT.jar ./project.jar
+#
+#      - name: 빌드 파일 압축하기 s3 전송 준비
+#        run: tar -czvf $GITHUB_SHA.tar.gz project.jar appspec.yml scripts
+#
+#      - name: aws 로그인
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          aws-region: ap-northeast-2
+#          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
+#          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+#
+#      - name: s3 프로젝트 폴더 업로드하기
+#        run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.tar.gz s3://junig-bucket/$GITHUB_SHA.tar.gz
+#
+#      - name: code deploy로 ec2에 배포하라고 명령
+#        run: aws deploy create-deployment
+#            --application-name depoly-server-codedepoly
+#            --deployment-config-name CodeDeployDefault.AllAtOnce
+#            --deployment-group-name depoly-server-prod
+#            --s3-location bucket=junig-bucket,bundleType=tgz,key=$GITHUB_SHA.tar.gz
