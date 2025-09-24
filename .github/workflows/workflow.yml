@@ -50,11 +50,12 @@ jobs:
         run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.tar.gz s3://junig-code-deploy-s3/$GITHUB_SHA.tar.gz
         
       - name: CodeDeploy로 ec2 agent에게 배포 명령
-        run: aws deploy create-deployment
-            --application-name code-deploy
-            --deployment-config-name CodeDeployDefault.AllAtOnce
-            --deployment-group-name production
-            --s3-location bucket=junig-code-deploy-s3,bundleType=tgz,key=$GITHUB_SHA.tar.gz
+        run: |
+          aws deploy create-deployment \
+          --application-name code-deploy \
+          --deployment-config-name CodeDeployDefault.AllAtOnce \
+          --deployment-group-name production \
+          --s3-location bucket=junig-code-deploy-s3,bundleType=tgz,key=$GITHUB_SHA.tar.gz
 
 
 
