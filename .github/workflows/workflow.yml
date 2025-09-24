@@ -42,12 +42,12 @@ jobs:
       - name: aws 로그인
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: aws-northeast-2
+          aws-region: ap-northeast-2
           aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
           aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
 
       - name: s3 압축파일 전달
-        run: aws s3 cp --region aws-northeast-2 ./$GITHUB_SHA.tar.gz s3://junig-code-deploy-s3/$GITHUB_SHA.tar.gz
+        run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.tar.gz s3://junig-code-deploy-s3/$GITHUB_SHA.tar.gz
         
       - name: CodeDeploy로 ec2 agent에게 배포 명령
         run: aws deploy create-deployment
