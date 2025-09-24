@@ -51,10 +51,10 @@ jobs:
         
       - name: CodeDeploy로 ec2 agent에게 배포 명령
         run: aws deploy create-deployment
-            --application-name depoly-server-codedepoly
+            --application-name code-deploy
             --deployment-config-name CodeDeployDefault.AllAtOnce
-            --deployment-group-name depoly-server-prod
-            --s3-location bucket=junig-bucket,bundleType=tgz,key=$GITHUB_SHA.tar.gz
+            --deployment-group-name production
+            --s3-location bucket=junig-code-deploy-bucket,bundleType=tgz,key=$GITHUB_SHA.tar.gz
 
 
 
