@@ -29,6 +29,8 @@ sudo ./install auto
     }
   ]
 }
+```
+
 - GITHUB - 사용자 s3FullAccess, CodeDeployFullAccess -> 키 등록
 - CodeDeploy - codeDeployRole
 
@@ -38,3 +40,4 @@ spring boot - workflow.yml, appspec.yml, start-server.sh
 - 파일이름 변경 및 파일압축 - aws 로그인 - s3에 압축파일 전송
 
 - code deploy로 ec2에게 배포 명령
+
